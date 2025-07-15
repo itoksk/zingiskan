@@ -1,0 +1,314 @@
+<!DOCTYPE html>
+<html lang="ja">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>ジンギスカン食べ方検定</title>
+    <!-- Tailwind CSSを読み込み -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <!-- Google Fontsからフォントを読み込み -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&family=Yakiniku+Yokocho&display=swap" rel="stylesheet">
+    <style>
+        /* カスタムフォントを適用 */
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            background-color: #F3E9DD; /* 暖かみのある背景色 */
+        }
+        /* アプリのタイトルに特別なフォントを適用 */
+        .font-yakiniku {
+            font-family: 'Yakiniku Yokocho', cursive;
+        }
+        /* ボタンのホバーエフェクト */
+        .btn-choice:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        /* 正解・不正解時のフィードバック用スタイル */
+        .correct {
+            background-color: #22c55e !important; /* Green 500 */
+            color: white !important;
+            border-color: #16a34a !important; /* Green 600 */
+        }
+        .incorrect {
+            background-color: #ef4444 !important; /* Red 500 */
+            color: white !important;
+            border-color: #dc2626 !important; /* Red 600 */
+        }
+        /* 結果表示のアニメーション */
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(20px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+        .fade-in {
+            animation: fadeIn 0.5s ease-out forwards;
+        }
+    </style>
+</head>
+<body class="bg-[#F3E9DD] flex items-center justify-center min-h-screen p-4">
+
+    <div id="quiz-container" class="w-full max-w-2xl mx-auto bg-white rounded-2xl shadow-2xl p-6 md:p-8 transform transition-all duration-500">
+        <!-- ヘッダー -->
+        <header class="text-center mb-6">
+            <h1 class="font-yakiniku text-5xl md:text-6xl text-[#D97706] tracking-wider">ジンギスカン</h1>
+            <h2 class="text-2xl md:text-3xl font-bold text-gray-700 mt-2">食べ方検定</h2>
+        </header>
+
+        <!-- クイズのメイン部分 -->
+        <main id="quiz-body">
+            <!-- スタート画面 -->
+            <div id="start-screen" class="text-center">
+                <img src="https://placehold.co/600x300/D97706/FFFFFF?text=%E3%82%B8%E3%83%B3%E3%82%AE%E3%82%B9%E3%82%AB%E3%83%B3%E3%81%AE%E7%94%BB%E5%83%8F&font=notosansjp" alt="ジンギスカンの画像" class="w-full h-auto rounded-lg mb-6 shadow-md">
+                <p class="text-gray-600 mb-6 text-lg">ジンギスカンの美味しい食べ方、知っていますか？<br>クイズに挑戦して、あなたの知識を試してみましょう！</p>
+                <button id="start-button" class="w-full bg-[#D97706] text-white font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-[#B45309] transition-all duration-300 transform hover:scale-105">
+                    検定スタート！
+                </button>
+            </div>
+
+            <!-- 問題表示画面 (最初は非表示) -->
+            <div id="question-screen" class="hidden">
+                <div class="mb-6">
+                  <div class="flex justify-between items-center mb-2">
+                    <p id="question-number" class="text-lg font-bold text-[#D97706]"></p>
+                    <p id="score-display" class="text-lg font-bold text-gray-600"></p>
+                  </div>
+                  <div class="w-full bg-gray-200 rounded-full h-2.5">
+                    <div id="progress-bar" class="bg-[#D97706] h-2.5 rounded-full" style="width: 0%"></div>
+                  </div>
+                </div>
+                <p id="question-text" class="text-xl md:text-2xl font-bold text-gray-800 mb-6 min-h-[100px]"></p>
+                <div id="options-container" class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <!-- 選択肢ボタンはJSで生成 -->
+                </div>
+                <div id="feedback-container" class="mt-6 text-center">
+                    <p id="feedback-text" class="text-2xl font-bold"></p>
+                    <p id="explanation-text" class="text-gray-600 mt-2"></p>
+                </div>
+                <button id="next-button" class="hidden w-full mt-6 bg-gray-700 text-white font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-gray-800 transition-all duration-300">
+                    次の問題へ
+                </button>
+            </div>
+
+            <!-- 結果表示画面 (最初は非表示) -->
+            <div id="result-screen" class="hidden text-center">
+                <p class="text-2xl font-bold text-gray-700 mb-2">検定終了！</p>
+                <p class="text-4xl md:text-5xl font-bold text-[#D97706] mb-4" id="final-score"></p>
+                <p class="text-xl text-gray-800 font-bold mb-4" id="result-title"></p>
+                <p class="text-gray-600 mb-8" id="result-message"></p>
+                <button id="restart-button" class="w-full bg-[#D97706] text-white font-bold py-3 px-6 rounded-lg text-xl shadow-lg hover:bg-[#B45309] transition-all duration-300 transform hover:scale-105">
+                    もう一度挑戦する
+                </button>
+            </div>
+        </main>
+    </div>
+
+    <script>
+        // --- クイズデータ ---
+        const quizData = [
+            {
+                question: "ジンギスカン鍋が温まったら、まず最初に鍋に置くものは何？",
+                options: ["野菜", "肉", "うどん", "羊の脂身"],
+                correctAnswer: "羊の脂身",
+                explanation: "まず羊の脂身（タレに漬け込んでいないもの）を鍋の中央で熱し、溶け出した脂を鍋全体に広げるのが基本です。"
+            },
+            {
+                question: "肉を焼くのに最も適した場所は鍋のどこ？",
+                options: ["鍋のフチ", "鍋のドーム状の中央", "野菜の上", "どこでも同じ"],
+                correctAnswer: "鍋のドーム状の中央",
+                explanation: "中央のドームで肉を焼くと、余分な脂と肉汁が下に流れ落ち、その旨味で野菜が美味しくなります。"
+            },
+            {
+                question: "野菜を置くのに最も適した場所は鍋のどこ？",
+                options: ["肉の上", "鍋の中央", "鍋のフチの溝", "肉の横"],
+                correctAnswer: "鍋のフチの溝",
+                explanation: "鍋のフチの溝に野菜を置くことで、山の上で焼いた肉の旨味を含んだ肉汁が流れ落ちてきて、野菜が美味しく焼き上がります。"
+            },
+            {
+                question: "お肉が焼けたら、タレにつけるのが一般的ですが、北海道でよく使われるタレのベースは何？",
+                options: ["ごま油と塩", "醤油", "味噌", "ポン酢"],
+                correctAnswer: "醤油",
+                explanation: "北海道のジンギスカンのタレは、醤油をベースに、香味野菜や果物、スパイスなどを加えたものが主流です。"
+            },
+            {
+                question: "ジンギスカンの締めに食べることが多い、残ったタレや肉汁で調理するものは何？",
+                options: ["お茶漬け", "焼きおにぎり", "うどん or ラーメン", "雑炊"],
+                correctAnswer: "うどん or ラーメン",
+                explanation: "肉と野菜の旨味が溶け込んだタレに、うどんやラーメンを入れて締めるのが定番。最後まで美味しくいただけます。"
+            }
+        ];
+
+        // --- DOM要素の取得 ---
+        const startScreen = document.getElementById('start-screen');
+        const questionScreen = document.getElementById('question-screen');
+        const resultScreen = document.getElementById('result-screen');
+        
+        const startButton = document.getElementById('start-button');
+        const nextButton = document.getElementById('next-button');
+        const restartButton = document.getElementById('restart-button');
+
+        const questionNumber = document.getElementById('question-number');
+        const scoreDisplay = document.getElementById('score-display');
+        const progressBar = document.getElementById('progress-bar');
+        const questionText = document.getElementById('question-text');
+        const optionsContainer = document.getElementById('options-container');
+        
+        const feedbackText = document.getElementById('feedback-text');
+        const explanationText = document.getElementById('explanation-text');
+
+        const finalScore = document.getElementById('final-score');
+        const resultTitle = document.getElementById('result-title');
+        const resultMessage = document.getElementById('result-message');
+
+        // --- 状態変数 ---
+        let currentQuestionIndex = 0;
+        let score = 0;
+
+        // --- イベントリスナー ---
+        startButton.addEventListener('click', startQuiz);
+        nextButton.addEventListener('click', showNextQuestion);
+        restartButton.addEventListener('click', startQuiz);
+
+        // --- 関数 ---
+
+        /**
+         * クイズを開始する関数
+         */
+        function startQuiz() {
+            currentQuestionIndex = 0;
+            score = 0;
+            startScreen.classList.add('hidden');
+            resultScreen.classList.add('hidden');
+            resultScreen.classList.remove('fade-in');
+            questionScreen.classList.remove('hidden');
+            nextButton.classList.add('hidden');
+            showQuestion();
+        }
+
+        /**
+         * 現在の問題と選択肢を表示する関数
+         */
+        function showQuestion() {
+            // フィードバックをリセット
+            feedbackText.textContent = '';
+            explanationText.textContent = '';
+            nextButton.classList.add('hidden');
+
+            // 問題データを取得
+            const questionData = quizData[currentQuestionIndex];
+            
+            // UIを更新
+            questionNumber.textContent = `第 ${currentQuestionIndex + 1} 問`;
+            scoreDisplay.textContent = `正解数: ${score} / ${quizData.length}`;
+            const progress = ((currentQuestionIndex) / quizData.length) * 100;
+            progressBar.style.width = `${progress}%`;
+            
+            questionText.textContent = questionData.question;
+            
+            // 選択肢をクリアして再生成
+            optionsContainer.innerHTML = '';
+            questionData.options.forEach(option => {
+                const button = document.createElement('button');
+                button.textContent = option;
+                button.classList.add('btn-choice', 'w-full', 'p-4', 'border-2', 'border-gray-300', 'rounded-lg', 'text-lg', 'text-gray-700', 'bg-white', 'transition-all', 'duration-200');
+                button.addEventListener('click', () => selectAnswer(button, option));
+                optionsContainer.appendChild(button);
+            });
+        }
+
+        /**
+         * 回答を選択したときの処理
+         * @param {HTMLButtonElement} selectedButton - 選択されたボタン要素
+         * @param {string} selectedOption - 選択された回答のテキスト
+         */
+        function selectAnswer(selectedButton, selectedOption) {
+            // すべてのボタンを無効化
+            const allButtons = optionsContainer.querySelectorAll('button');
+            allButtons.forEach(btn => btn.disabled = true);
+
+            const questionData = quizData[currentQuestionIndex];
+            const isCorrect = selectedOption === questionData.correctAnswer;
+
+            if (isCorrect) {
+                score++;
+                selectedButton.classList.add('correct');
+                feedbackText.textContent = '正解！';
+                feedbackText.classList.add('text-green-500');
+                feedbackText.classList.remove('text-red-500');
+            } else {
+                selectedButton.classList.add('incorrect');
+                feedbackText.textContent = '不正解...';
+                feedbackText.classList.add('text-red-500');
+                feedbackText.classList.remove('text-green-500');
+                // 正解の選択肢をハイライト
+                allButtons.forEach(btn => {
+                    if (btn.textContent === questionData.correctAnswer) {
+                        btn.classList.add('correct');
+                    }
+                });
+            }
+            
+            explanationText.textContent = questionData.explanation;
+            scoreDisplay.textContent = `正解数: ${score} / ${quizData.length}`;
+
+            // 次へボタンまたは結果表示ボタンを表示
+            if (currentQuestionIndex < quizData.length - 1) {
+                nextButton.textContent = "次の問題へ";
+                nextButton.classList.remove('hidden');
+            } else {
+                nextButton.textContent = "結果を見る";
+                nextButton.classList.remove('hidden');
+            }
+        }
+
+        /**
+         * 次の問題を表示するか、結果を表示する関数
+         */
+        function showNextQuestion() {
+            currentQuestionIndex++;
+            if (currentQuestionIndex < quizData.length) {
+                showQuestion();
+            } else {
+                showResults();
+            }
+            const progress = ((currentQuestionIndex) / quizData.length) * 100;
+            progressBar.style.width = `${progress}%`;
+        }
+
+        /**
+         * 最終結果を表示する関数
+         */
+        function showResults() {
+            questionScreen.classList.add('hidden');
+            resultScreen.classList.remove('hidden');
+            resultScreen.classList.add('fade-in');
+
+            finalScore.textContent = `${score} / ${quizData.length} 問正解`;
+            
+            let title, message;
+            const correctRate = score / quizData.length;
+
+            if (correctRate === 1) {
+                title = "ジンギスカン神（JIN-GAMI）";
+                message = "完璧です！あなたはジンギスカンの全てを知り尽くしています。その知識と愛、まさに神の領域です！";
+            } else if (correctRate >= 0.8) {
+                title = "ジンギスカン奉行";
+                message = "素晴らしい成績！美味しい食べ方を熟知していますね。あなたがいれば、どんなジンギスカンパーティーも盛り上がること間違いなし！";
+            } else if (correctRate >= 0.6) {
+                title = "ジンギスカン好き";
+                message = "なかなかの知識です！ジンギスカン愛が伝わってきます。あと一歩で奉行の座も夢じゃない！";
+            } else if (correctRate >= 0.2) {
+                title = "ジンギスカン見習い";
+                message = "まだまだ伸びしろがありますね！この検定を機に、もっとジンギスカンの奥深い世界を探求してみましょう。";
+            } else {
+                title = "ジンギスカン初心者";
+                message = "ジンギスカンへの第一歩、お疲れ様でした！美味しい食べ方はたくさんあります。これからどんどん詳しくなっていきましょう！";
+            }
+            
+            resultTitle.textContent = title;
+            resultMessage.textContent = message;
+        }
+
+    </script>
+</body>
+</html>
